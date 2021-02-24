@@ -23,7 +23,47 @@
  * Return 0 on success, non-zero on failure
 */
 int server(char *server_port) {
-    return 0;
+  int sockInt, new_sockId, errorInt; //creates int
+  struct addrinfo portSpecs,res,res0; //creates structer vars
+  memset(&portSpecs,0,sizeof(portSpecs)); //zeros portSpecs
+  //sets up portSpecs for getaddrinfo()
+  portSpecs.ai_family = AF_UNSPEC;
+  portSpecs.ai_socktype = SOCK_STREAM;
+  //tries to find ports with the specs given in portSpecs
+  if((errorInt = getaddrinfo(NULL,server_port,&portSpecs,&res) != 0)){
+    fprintf(stderr,"server: getaddrinfo failed");
+    exit(EXIT_FAILURE);//couldn't find a port open
+  }
+  //loops through all ports given by getaddrinfo
+  for(res = res0; res != NULL; res=res->ai_next){
+    if((sockInt = socket(res->ai_family,res->ai_socktype,res->ai_protocol)) == -1){
+      perror("server: socket failed");//uses perror b/c this error won't break the program
+      continue;//keeps looping to find a good socket
+    }
+    if((bind(sockInt, res->ai_addr, res->addrlen)) == -1){
+      perror("server: bind failed");
+      continue;//keeps looping to find a good socket
+    }
+    break;//break out of loop b/c bound to a port
+  }
+//preparing for incoming requests
+if(listen(sockInt,QUEUE_LENGTH) == -1){
+  perror("server: listen failed");
+  exit(EXIT_FAILURE);
+}
+//telling me where in the code the server is
+printf("Server is listening...");
+//looping for someone to connect
+while(true){
+  if((new_sockId = accept(sockInt,NULL,NULL))==-1){//NEED TO FILL IN
+    perror("server: accept failed");
+    continue;
+  }
+  //
+  recv(new_sockId,,RECV_BUFFER_SIZE,0)
+  close(new_sockId);
+}
+  return 0;
 }
 
 /*
