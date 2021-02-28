@@ -25,7 +25,7 @@ int client(char *server_ip, char *server_port) {
   struct addrinfo portSpec, *res, *res0;
   int sockInt;
   char *data = NULL;
-  size_t length = 0;
+  size_t length = SEND_BUFFER_SIZE;
   //set up port spects 
   memset(&portSpec,0,sizeof(portSpec));
   portSpec.ai_family = AF_UNSPEC;

@@ -23,7 +23,7 @@
  * Return 0 on success, non-zero on failure
 */
 int server(char *server_port) {
-  int sockInt, new_sockId; //creates int
+  int sockInt, new_sockId; //creates int for sockets
   char data[RECV_BUFFER_SIZE];
   struct addrinfo portSpecs, *res, *res0; //creates structer vars
   struct sockaddr clientAddr;
@@ -38,12 +38,10 @@ int server(char *server_port) {
     exit(EXIT_FAILURE);//couldn't find a port open
   }
   //loops through all ports given by getaddrinfo
-  int i = 0;
   for(res = res0; res != NULL; res=res->ai_next){
     if((sockInt = socket(res->ai_family,res->ai_socktype,res->ai_protocol)) < 0){
       perror("server: socket failed\n");//uses perror b/c this error won't break the program
       continue;//keeps looping to find a good socket
-      i++;
     }
     if((bind(sockInt, res->ai_addr, res->ai_addrlen)) < 0){
       perror("server: bind failed\n");
@@ -51,8 +49,6 @@ int server(char *server_port) {
     }
     break;//break out of loop b/c bound to a port
   }
-  printf("%d",i);
-  fflush(stdout);
   if(res == NULL){
     fprintf(stderr,"server: failed to create a fd");
     exit(EXIT_FAILURE);
@@ -62,8 +58,6 @@ int server(char *server_port) {
     perror("server: listen failed\n");
     exit(EXIT_FAILURE);
   }
-  //telling me where in the code the server is
-  //fprintf(stdout,"Server is listening...\n");
   //looping for someone to connect
   while(1){
     //sets the size of the clientAddr
