@@ -1,6 +1,6 @@
 /*****************************************************************************
  * server-c.c                                                                 
- * Name:
+ * Name: Zackary Hopkisn
  *****************************************************************************/
 
 #include <stdio.h>
@@ -23,45 +23,61 @@
  * Return 0 on success, non-zero on failure
 */
 int server(char *server_port) {
-  int sockInt, new_sockId, errorInt; //creates int
-  struct addrinfo portSpecs,res,res0; //creates structer vars
+  int sockInt, new_sockId; //creates int
+  char data[RECV_BUFFER_SIZE];
+  struct addrinfo portSpecs, *res, *res0; //creates structer vars
+  struct sockaddr clientAddr;
+  socklen_t clientAddr_size;
   memset(&portSpecs,0,sizeof(portSpecs)); //zeros portSpecs
   //sets up portSpecs for getaddrinfo()
   portSpecs.ai_family = AF_UNSPEC;
   portSpecs.ai_socktype = SOCK_STREAM;
   //tries to find ports with the specs given in portSpecs
-  if((errorInt = getaddrinfo(NULL,server_port,&portSpecs,&res) != 0)){
-    fprintf(stderr,"server: getaddrinfo failed");
+  if((getaddrinfo("127.0.0.1",server_port,&portSpecs,&res0) != 0)){
+    fprintf(stderr,"server: getaddrinfo failed\n");
     exit(EXIT_FAILURE);//couldn't find a port open
   }
   //loops through all ports given by getaddrinfo
+  int i = 0;
   for(res = res0; res != NULL; res=res->ai_next){
-    if((sockInt = socket(res->ai_family,res->ai_socktype,res->ai_protocol)) == -1){
-      perror("server: socket failed");//uses perror b/c this error won't break the program
+    if((sockInt = socket(res->ai_family,res->ai_socktype,res->ai_protocol)) < 0){
+      perror("server: socket failed\n");//uses perror b/c this error won't break the program
       continue;//keeps looping to find a good socket
+      i++;
     }
-    if((bind(sockInt, res->ai_addr, res->addrlen)) == -1){
-      perror("server: bind failed");
+    if((bind(sockInt, res->ai_addr, res->ai_addrlen)) < 0){
+      perror("server: bind failed\n");
       continue;//keeps looping to find a good socket
     }
     break;//break out of loop b/c bound to a port
   }
-//preparing for incoming requests
-if(listen(sockInt,QUEUE_LENGTH) == -1){
-  perror("server: listen failed");
-  exit(EXIT_FAILURE);
-}
-//telling me where in the code the server is
-printf("Server is listening...");
-//looping for someone to connect
-while(true){
-  if((new_sockId = accept(sockInt,NULL,NULL))==-1){//NEED TO FILL IN
-    perror("server: accept failed");
-    continue;
+  printf("%d",i);
+  fflush(stdout);
+  if(res == NULL){
+    fprintf(stderr,"server: failed to create a fd");
+    exit(EXIT_FAILURE);
   }
-  //
-  recv(new_sockId,,RECV_BUFFER_SIZE,0)
-  close(new_sockId);
+  //preparing for incoming requests
+  if(listen(sockInt,QUEUE_LENGTH) == -1){
+    perror("server: listen failed\n");
+    exit(EXIT_FAILURE);
+  }
+  //telling me where in the code the server is
+  //fprintf(stdout,"Server is listening...\n");
+  //looping for someone to connect
+  while(1){
+    //sets the size of the clientAddr
+    clientAddr_size = sizeof(clientAddr);
+    //tires accept a client connecting on on the socket
+    if((new_sockId = accept(sockInt, &clientAddr, &clientAddr_size)) < 0){
+      perror("server: accept failed\n");
+      continue;
+    }
+    //NEED TO TAKE IN INPUT AND PRINT IT OUT
+    recv(new_sockId,&data,RECV_BUFFER_SIZE,0);
+    fprintf(stdout,"%s",data);
+    fflush(stdout);
+    close(new_sockId);
 }
   return 0;
 }

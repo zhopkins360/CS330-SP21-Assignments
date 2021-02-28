@@ -1,6 +1,6 @@
 /*****************************************************************************
  * client-c.c                                                                 
- * Name:
+ * Name: Zackary Hopkins
  *****************************************************************************/
 
 #include <stdio.h>
@@ -12,7 +12,6 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <errno.h>
 
 #define SEND_BUFFER_SIZE 2048
 
@@ -22,6 +21,45 @@
  * Return 0 on success, non-zero on failure
 */
 int client(char *server_ip, char *server_port) {
+  //vars needed
+  struct addrinfo portSpec, *res, *res0;
+  int sockInt;
+  char *data = NULL;
+  size_t length = 0;
+  //set up port spects 
+  memset(&portSpec,0,sizeof(portSpec));
+  portSpec.ai_family = AF_UNSPEC;
+  portSpec.ai_socktype = SOCK_STREAM;
+  //looks for ports to use 
+  if((getaddrinfo(server_ip,server_port,&portSpec,&res0)) != 0){
+    fprintf(stderr,"client: getaddrinfo fail\n");
+    exit(EXIT_FAILURE);
+  }
+  //loops through the ports 
+  for(res=res0; res != NULL; res = res->ai_next){
+    //tries to create a file descriptor with the given socket info
+    if((sockInt = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == -1){
+      perror("client: socket failed\n");
+      continue;
+    }
+    //tires to connect ot server on the socket
+    if((connect(sockInt,res->ai_addr,res->ai_addrlen)) < 0){
+      perror("client: connect failed\n");
+      continue;
+    }
+  }
+  //gets the data from stdin and gets a refrence to it in data
+  if((getline(&data,&length,stdin)) < 0){
+    fprintf(stderr,"client: getline fail\n");
+    exit(EXIT_FAILURE);
+  }
+  //tries to send the data on the file descriptor
+  if((send(sockInt,data,SEND_BUFFER_SIZE,0)) < 0){
+    fprintf(stderr,"client: send failed\n");
+    exit(EXIT_FAILURE);
+  }
+  //releses the socket after sending the message
+  close(sockInt);
   return 0;
 }
 
