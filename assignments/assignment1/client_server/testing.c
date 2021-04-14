@@ -16,7 +16,7 @@ int grabInput(){
     size_t length = 0;
     getline(&input,&length,stdin);
     
-    fprintf(stdout,"%s",input);
+    fprintf(stdout,"%d",strlen("bitch"));
     return 0;
 }
 

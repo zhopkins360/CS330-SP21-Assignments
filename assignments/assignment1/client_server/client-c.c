@@ -24,39 +24,32 @@ int client(char *server_ip, char *server_port) {
   //vars needed
   struct addrinfo portSpec, *res, *res0;
   int sockInt;
-  char *data = NULL;
-  size_t length = SEND_BUFFER_SIZE;
+  char data[SEND_BUFFER_SIZE];
+  char *whileCon = NULL;
   //set up port spects 
   memset(&portSpec,0,sizeof(portSpec));
   portSpec.ai_family = AF_UNSPEC;
   portSpec.ai_socktype = SOCK_STREAM;
-  //looks for ports to use 
-  if((getaddrinfo(server_ip,server_port,&portSpec,&res0)) != 0){
+  //looks for a port with the info given in portSpecs and stores the results in res
+  if((getaddrinfo(server_ip,server_port,&portSpec,&res)) != 0){
     fprintf(stderr,"client: getaddrinfo fail\n");
     exit(EXIT_FAILURE);
   }
-  //loops through the ports 
-  for(res=res0; res != NULL; res = res->ai_next){
-    //tries to create a file descriptor with the given socket info
-    if((sockInt = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == -1){
-      perror("client: socket failed\n");
-      continue;
-    }
-    //tires to connect ot server on the socket
-    if((connect(sockInt,res->ai_addr,res->ai_addrlen)) < 0){
-      perror("client: connect failed\n");
-      continue;
-    }
+  //tries to create a file descriptor with the given socket info
+  if((sockInt = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == -1){
+    perror("client: socket failed\n");
+  }
+  //tires to connect ot server on the socket
+  if((connect(sockInt,res->ai_addr,res->ai_addrlen)) < 0){
+    perror("client: connect failed\n");
   }
   //gets the data from stdin and gets a refrence to it in data
-  if((getline(&data,&length,stdin)) < 0){
-    fprintf(stderr,"client: getline fail\n");
-    exit(EXIT_FAILURE);
-  }
-  //tries to send the data on the file descriptor
-  if((send(sockInt,data,SEND_BUFFER_SIZE,0)) < 0){
-    fprintf(stderr,"client: send failed\n");
-    exit(EXIT_FAILURE);
+  while((whileCon = fgets(data,SEND_BUFFER_SIZE,stdin)) != NULL ){
+    //tries to send the data on the file descriptor
+    if(send(sockInt,data,SEND_BUFFER_SIZE,0) < 0){
+      fprintf(stderr,"client: send failed\n");
+      exit(EXIT_FAILURE);
+    }
   }
   //releses the socket after sending the message
   close(sockInt);
